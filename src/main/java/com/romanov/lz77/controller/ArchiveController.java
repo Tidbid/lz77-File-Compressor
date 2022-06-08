@@ -4,6 +4,7 @@ import com.romanov.lz77.service.ArchService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,29 +37,9 @@ public class ArchiveController {
         return "redirect:/upload?encode";
     }
 
-    @PostMapping("/encode")
-    String viewEncodeResultsPage(@RequestParam("file") MultipartFile multipartFile) {
-        try {
-            archService.uploadFile(false, multipartFile);
-        } catch(IOException e) {
-            return "redirect:/?error";
-        }
-        return "redirect:/results?encode";
-    }
-
     @GetMapping("/decode")
     String viewDecodePage() {
         return "redirect:/upload?decode";
-    }
-
-    @PostMapping("/decode")
-    String viewDecodeResultsPage(@RequestParam("file") MultipartFile multipartFile) {
-        try {
-            archService.uploadFile(true, multipartFile);
-        } catch(IOException e) {
-            return "redirect:/?error";
-        }
-        return "redirect:/results?decode";
     }
 
     @GetMapping("/upload")
@@ -66,24 +47,63 @@ public class ArchiveController {
         return "upload";
     }
 
-    @GetMapping("/results")
-    String viewResultsPage() {
+    @PostMapping("/upload/decoded")
+    String viewModeSelector(@RequestParam("file") MultipartFile multipartFile){
+        try {
+            archService.uploadFile(false, multipartFile);
+            return "mode";
+        } catch(Exception e) {
+            return "redirect:/?error";
+        }
+    }
+
+    @PostMapping("/upload/encoded")
+    String viewDecodeResultsPage(@RequestParam("file") MultipartFile multipartFile) {
+        try {
+            archService.uploadFile(true, multipartFile);
+            return "redirect:/process/decode";
+        } catch(Exception e) {
+            return "redirect:/?error";
+        }
+    }
+
+    @GetMapping("/process/encode")
+    String viewEncodeResultsPage(@RequestParam("rad") Boolean isRad) {
+        try {
+            int bufferSize = (isRad) ? 8192 * 2 : 8192;
+            if (archService.encodeFile(bufferSize)) {
+                double ratio = archService.getRatio();
+                return "redirect:/results/encode/?encode&ratio=" + ratio;
+            } else {
+                throw new Exception("Something went wrong while encoding the file!");
+            }
+        } catch(Exception e) {
+            return "redirect:/?error";
+        }
+    }
+
+    @GetMapping("/process/decode")
+    String viewDecodeResultsPage() {
+        try {
+            if (archService.decodeFile()){
+                return "redirect:/results/decode?decode";
+            } else {
+                throw new Exception("Something went wrong while decoding the file!");
+            }
+        } catch(Exception e) {
+            return "redirect:/?error";
+        }
+    }
+
+    @GetMapping("/results/encode")
+    String viewDecodeResultsPage(@RequestParam("ratio") Double ratio, Model model) {
+        model.addAttribute("ratio", ratio);
         return "results";
     }
 
-    @GetMapping("/process")
-    String processResult(@RequestParam("enc") Boolean isEncoded) {
-        if (isEncoded){
-            if (archService.decodeFile()) {
-                return "redirect:/download?enc=false";
-            } else {
-                return "redirect:/?error";
-            }
-        }
-        if (archService.encodeFile()) {
-            return "redirect:/download?enc=true";
-        }
-        return "redirect:/?error";
+    @GetMapping("/results/decode")
+    String viewResultsPage() {
+        return "results";
     }
 
     @ResponseBody

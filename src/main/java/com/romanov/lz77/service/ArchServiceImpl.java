@@ -54,7 +54,7 @@ public class ArchServiceImpl implements ArchService {
     }
 
     @Override
-    public boolean encodeFile() {
+    public boolean encodeFile(int bufferSize) {
         //DECODE_FORMAT is defined by an upload procedure
         //it is the format of the uploaded file
         String pathDec = DECODE_DIR + DECODE_FILE + DECODE_FORMAT;
@@ -70,7 +70,8 @@ public class ArchServiceImpl implements ArchService {
                  BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(fileDec))) {
                 //adding format for decoding purposes
                 outputStream.write((DECODE_FORMAT + '\n').getBytes(Charset.defaultCharset()));
-                byte[] buffer = new byte[8192];
+                outputStream.write((String.valueOf(bufferSize) + '\n').getBytes(Charset.defaultCharset()));
+                byte[] buffer = new byte[bufferSize];
                 int bytesRead = -1;
                 String hexRep;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -78,7 +79,6 @@ public class ArchServiceImpl implements ArchService {
                     StringBuilder searchBuf = new StringBuilder(bytesRead);
                     StringBuilder line = new StringBuilder(bytesRead);
                     int i = 0;
-                    //TODO check constraints on i
                     while (i < hexRep.length()) {
                         List<Integer> competingIndexes = new LinkedList<>();
                         int j = -1;
@@ -109,11 +109,11 @@ public class ArchServiceImpl implements ArchService {
                             line.append(hexRep.charAt(i));
                         } else {
                             //min amount for compression
-                            if (len > 5) {
+                            if (i == hexRep.length() - 1 || len > 5) {
                                 if (i != hexRep.length() - 1 || competingIndexes.isEmpty()) {
-                                    line.append(String.format("%d,%d,%c", i - len - lastMatch, len, hexRep.charAt(i)));
+                                    line.append(String.format("~%d,%d,%c~", i - len - lastMatch, len, hexRep.charAt(i)));
                                 } else {
-                                    line.append(String.format("%d,%d,", i + 1 - len - lastMatch, len));
+                                    line.append(String.format("~%d,%d,", i + 1 - len - lastMatch, len));
                                 }
                             } else {
                                 for (int k = i - len; k <= i; k++) {
@@ -121,14 +121,13 @@ public class ArchServiceImpl implements ArchService {
                                 }
                             }
                         }
-                        if (i != hexRep.length() - 1) {
-                            line.append('~');
-                        }
                         searchBuf.append(hexRep, i - len, ++i);
                     }
+                    if (line.charAt(line.length() - 1) == '~') {
+                        line.deleteCharAt(line.length() - 1);
+                    }
                     line.append('\n');
-
-                    outputStream.write(line.toString().getBytes(Charset.defaultCharset()));
+                    outputStream.write(line.toString().replace("~~", "~").getBytes(Charset.defaultCharset()));
                 }
                 return true;
             }
@@ -153,6 +152,11 @@ public class ArchServiceImpl implements ArchService {
                 }
                 //TODO check if first line is a correct file extension
                 DECODE_FORMAT = line;
+                line = parser.readLine();
+                if (line == null) {
+                    throw new IllegalStateException("File for decoding is corrupted!");
+                }
+                int bufferSize = Integer.parseInt(line);
                 //writing into this one
                 File fileDec = new File(DECODE_DIR + DECODE_FILE + DECODE_FORMAT);
                 fileDec.createNewFile();
@@ -160,10 +164,13 @@ public class ArchServiceImpl implements ArchService {
                 String[] content;
                 try (FileOutputStream outputStream = new FileOutputStream(fileDec)) {
                     while ((line = parser.readLine()) != null && !Objects.equals(line, "\n")) {
-                        //TODO hardcoded 8192*2 capacity, fix
-                        StringBuilder stringBuilder = new StringBuilder(8192 * 2);
+                        StringBuilder stringBuilder = new StringBuilder(bufferSize * 2);
                         blocks = line.split("~");
                         for (String block : blocks) {
+                            if (block.indexOf(',') == -1) {
+                                stringBuilder.append(block);
+                                continue;
+                            }
                             content = block.split(",",3);
                             int offset = Integer.parseInt(content[0]);
                             int length = Integer.parseInt(content[1]);
@@ -189,5 +196,12 @@ public class ArchServiceImpl implements ArchService {
             log.error("Something went wrong while decoding the file. Error message: {}", e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public double getRatio() throws Exception {
+        File encFile = new File(ENCODE_DIR + ENCODE_FILE + ENCODE_FORMAT);
+        File decFile = new File(DECODE_DIR + DECODE_FILE + DECODE_FORMAT);
+        return Math.floor((1d * Files.size(encFile.toPath()) / Files.size(decFile.toPath())) * 100);
     }
 }

@@ -10,17 +10,35 @@
 <section>
     <div class="container mt-4 text-center">
         <h1 class="font-monospace mb-4">Архиватор 3000</h1>
-        <form class="d-flex justify-content-center align-items-stretch" th:if="${param.encode}" th:action = "@{~/encode}" method = "post" enctype = "multipart/form-data">
-            <label class="font-monospace fs-5 align-self-center me-2">Выберите файл для сжатия:</label>
-            <input type= "file" class= "btn btn-outline-secondary me-2" accept = "text/*" name = "file" required>
-            <input type= "submit" class= "btn btn-outline-primary" value = "Сжать">
-        </form>
-        <form class="d-flex justify-content-center align-items-stretch" th:if="${param.decode}" th:action = "@{~/decode}" method = "post" enctype = "multipart/form-data">
-            <label class="font-monospace fs-5 align-self-center me-2">Выберите файл (формат .lz77) для распаковки:</label>
-            <input type= "file" class= "btn btn-outline-secondary me-2" accept = "*/*" name = "file" required>
-            <input type= "submit" class= "btn btn-outline-primary" value = "Распаковать">
-        </form>
+        <div class="d-flex justify-content-center align-items-stretch">
+            <form class="d-flex justify-content-center align-items-stretch"
+                  th:if="${param.encode}"
+                  th:action = "@{~/upload/decoded}"
+                  method = "post"
+                  enctype = "multipart/form-data">
+                <label class="font-monospace fs-5 align-self-center me-2">Выберите файл для сжатия:</label>
+                <input type= "file" class= "btn btn-outline-secondary me-2" accept = "text/*" name = "file" required>
+                <input type= "submit" class= "btn btn-outline-primary me-2" value = "Сжать">
+            </form>
+            <form class="d-flex justify-content-center align-items-stretch"
+                  th:if="${param.decode}"
+                  th:action = "@{~/upload/encoded}"
+                  method = "post"
+                  enctype = "multipart/form-data">
+                <label class="font-monospace fs-5 align-self-center me-2">Выберите файл (формат .lz77) для распаковки:</label>
+                <input type= "file" class= "btn btn-outline-secondary me-2" accept = "*/*" name = "file" required>
+                <input type= "submit" class= "btn btn-outline-primary me-2" value = "Распаковать">
+            </form>
+            <a class="btn btn-outline-danger" th:href="@{~/}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <desc>Download more icon variants from https://tabler-icons.io/i/arrow-back</desc>
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" />
+                </svg>
+            </a>
+        </div>
     </div>
 </section>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
 </body>
 </html>

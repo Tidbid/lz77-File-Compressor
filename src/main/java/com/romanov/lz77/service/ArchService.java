@@ -6,7 +6,9 @@ import java.io.IOException;
 
 public interface ArchService {
     void uploadFile(Boolean isEncoded, MultipartFile multipartFile) throws IOException;
-    boolean encodeFile();
+    boolean encodeFile(int bufferSize);
 
     boolean decodeFile();
+
+    double getRatio() throws Exception;
 }

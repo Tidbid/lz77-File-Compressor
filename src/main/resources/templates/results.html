@@ -13,12 +13,24 @@
         <p class="font-monospace fs-4">
         <span th:if="${param.encode}">
             Ваш файл был успешно сжат.
+            <span th:if="${ratio} >= 100.0" class="text-danger">
+                <br>Степень сжатия: <span th:text="${ratio}"></span>%
+                <br>Ужасный результат. Не советуем скачивать файл.
+            </span>
+            <span th:if="${ratio} < 80.0 and ${ratio} > 50.0" class="text-warning">
+                <br>Степень сжатия: <span th:text="${ratio}"></span>%
+                <br>Адекватный результат.
+            </span>
+            <span th:if="${ratio} < 50.0" class="text-success">
+                <br>Степень сжатия: <span th:text="${ratio}"></span>%
+                <br>Отличный результат.
+            </span>
         </span>
         <span th:if="${param.decode}">
             Ваш файл был успешно распакован.
         </span>
         </p>
-        <a th:if="${param.decode}" th:href="@{~/process(enc=${true})}"
+        <a th:if="${param.decode}" th:href="@{~/download(enc=${false})}"
            class="col-2 btn btn-lg btn-outline-success">
             <div class="d-flex justify-content-center align-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -32,7 +44,7 @@
                 Скачать
             </div>
         </a>
-        <a th:if="${param.encode}" th:href="@{~/process(enc=${false})}"
+        <a th:if="${param.encode}" th:href="@{~/download(enc=${true})}"
            class="col-2 btn btn-lg btn-outline-success">
             <div class="d-flex justify-content-center align-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
