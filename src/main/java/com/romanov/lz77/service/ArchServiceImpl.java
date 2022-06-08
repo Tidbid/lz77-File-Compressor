@@ -84,7 +84,6 @@ public class ArchServiceImpl implements ArchService {
                         int j = -1;
                         int lastMatch = -1;
                         int len = 0;
-                        //will this thing die if j >= hexRep.length() ?
                         while((j = searchBuf.indexOf(String.valueOf(hexRep.charAt(i)), j + 1)) != -1) {
                             competingIndexes.add(j);
                         }
@@ -107,12 +106,19 @@ public class ArchServiceImpl implements ArchService {
                             }
                         }
                         if (lastMatch == -1) {
-                            line.append(String.format("0,0,%c", hexRep.charAt(i)));
+                            line.append(hexRep.charAt(i));
                         } else {
-                            if (i != hexRep.length() - 1 || competingIndexes.isEmpty()) {
-                                line.append(String.format("%d,%d,%c", i - len - lastMatch, len, hexRep.charAt(i)));
+                            //min amount for compression
+                            if (len > 5) {
+                                if (i != hexRep.length() - 1 || competingIndexes.isEmpty()) {
+                                    line.append(String.format("%d,%d,%c", i - len - lastMatch, len, hexRep.charAt(i)));
+                                } else {
+                                    line.append(String.format("%d,%d,", i + 1 - len - lastMatch, len));
+                                }
                             } else {
-                                line.append(String.format("%d,%d,", i + 1 - len - lastMatch, len));
+                                for (int k = i - len; k <= i; k++) {
+                                    line.append(hexRep.charAt(k));
+                                }
                             }
                         }
                         if (i != hexRep.length() - 1) {
@@ -121,6 +127,7 @@ public class ArchServiceImpl implements ArchService {
                         searchBuf.append(hexRep, i - len, ++i);
                     }
                     line.append('\n');
+
                     outputStream.write(line.toString().getBytes(Charset.defaultCharset()));
                 }
                 return true;
